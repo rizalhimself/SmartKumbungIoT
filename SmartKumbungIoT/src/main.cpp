@@ -24,7 +24,7 @@ char password[] = "sinta123";
 #define pinSwFan D3
 #define pinSwFanMist D4
 #define pinSwMist D5
-#define pinSw4 D6
+#define pinSwPeltier D6
 #define pinLED D8
 
 // definisi virtual pin blynk yang digunakan
@@ -34,6 +34,9 @@ char password[] = "sinta123";
 #define vPinLedStatMist V3
 #define vPinBSuhu V4
 #define vPinBKelembapan V5
+#define vPinBBIntensCahayaMin V6
+#define vPinIntensitasCahaya V7
+#define vPinPeltierStat V9
 
 // inisialisasi beberapa variabel yang digunakan
 BlynkTimer timer;
@@ -86,6 +89,21 @@ void mistOff()
   mistStats.off();
 }
 
+// fungsi peltier nyala
+void peltOn()
+{
+  digitalWrite(pinSwPeltier, LOW);
+  Serial.println("Peltier On");
+}
+
+// fungsi peltier mati
+void peltOff()
+{
+  digitalWrite(pinSwPeltier, HIGH);
+  Serial.println("Peltier Off");
+}
+
+
 // fungsi kirim data ke server blynk
 void sendSensorData()
 {
@@ -106,6 +124,7 @@ void sendSensorData()
   delay(250);
 
   // tampilkan nilai intensitas cahaya
+  Blynk.virtualWrite(vPinIntensitasCahaya, intensitasCahaya);
   Serial.print("% Intensitas Cahaya: ");
   Serial.print(intensitasCahaya);
   Serial.println(" lux");
@@ -158,6 +177,11 @@ BLYNK_WRITE(vPinBSuhu)
 {
   batasSuhu = param.asInt();
 }
+// dapatkan input batas bawah intensitas cahaya dari blynk
+BLYNK_WRITE(vPinBBIntensCahayaMin)
+{
+  batasBawahNilaiCahaya = param.asInt();
+}
 
 void setup()
 {
@@ -171,12 +195,12 @@ void setup()
   pinMode(pinSwFan, OUTPUT);
   pinMode(pinSwFanMist, OUTPUT);
   pinMode(pinSwMist, OUTPUT);
-  pinMode(pinSw4, OUTPUT);
+  pinMode(pinSwPeltier, OUTPUT);
   pinMode(pinLED, OUTPUT);
   digitalWrite(pinSwFan, HIGH);
   digitalWrite(pinSwFanMist, HIGH);
   digitalWrite(pinSwMist, HIGH);
-  digitalWrite(pinSw4, HIGH);
+  digitalWrite(pinSwPeltier, HIGH);
 }
 
 void loop()
