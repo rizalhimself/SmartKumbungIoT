@@ -12,6 +12,7 @@
 #include <DHT.h>
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
+#include <LiquidCrystal_I2C.h>
 
 // info login jaringan dan server blynk
 char auth[] = BLYNK_AUTH_TOKEN;
@@ -21,8 +22,8 @@ char password[] = "sinta123";
 // definisi pin wemos yang digunakan
 #define pinDHT D7
 #define pinTMPT6000 A0
-#define pinSwFan D3
-#define pinSwFanMist D4
+#define pinSwFan D2
+#define pinSwFanMist D9
 #define pinSwMist D5
 #define pinSwPeltier D6
 #define pinLED D8
@@ -36,14 +37,16 @@ char password[] = "sinta123";
 #define vPinBKelembapan V5
 #define vPinBBIntensCahayaMin V6
 #define vPinIntensitasCahaya V7
-#define vPinPeltierStat V9
+#define vPinPeltierStat V8
 
 // inisialisasi beberapa variabel yang digunakan
 BlynkTimer timer;
 DHT dht(pinDHT, DHT11);
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 WidgetLED fanStats(vPinLedStatsFan);
 WidgetLED mistStats(vPinLedStatMist);
+WidgetLED peltStats(vPinPeltierStat);
 
 int suhu, kelembapan, intensitasCahaya;
 int batasSuhu = 27;
@@ -92,6 +95,7 @@ void mistOff()
 // fungsi peltier nyala
 void peltOn()
 {
+  peltStats.on();
   digitalWrite(pinSwPeltier, LOW);
   Serial.println("Peltier On");
 }
@@ -99,10 +103,10 @@ void peltOn()
 // fungsi peltier mati
 void peltOff()
 {
+  peltStats.off();
   digitalWrite(pinSwPeltier, HIGH);
   Serial.println("Peltier Off");
 }
-
 
 // fungsi kirim data ke server blynk
 void sendSensorData()
@@ -113,6 +117,10 @@ void sendSensorData()
   Serial.print("% Temperature: ");
   Serial.print(suhu);
   Serial.println(" C");
+  lcd.setCursor(0, 0);
+  lcd.print("Suhu: ");
+  lcd.print(suhu);
+  lcd.print(" C");
   delay(250);
 
   // dapatkan data kelembapan
@@ -121,6 +129,10 @@ void sendSensorData()
   Serial.print("% Kelembaban: ");
   Serial.print(kelembapan);
   Serial.println(" %");
+  lcd.setCursor(0, 1);
+  lcd.print("Lembab : ");
+  lcd.print(kelembapan);
+  lcd.print(" %");
   delay(250);
 
   // tampilkan nilai intensitas cahaya
@@ -128,8 +140,17 @@ void sendSensorData()
   Serial.print("% Intensitas Cahaya: ");
   Serial.print(intensitasCahaya);
   Serial.println(" lux");
+  lcd.setCursor(0, 2);
+  lcd.print("Cahaya : ");
+  lcd.print(intensitasCahaya);
+  lcd.print(" lux");
   Serial.print("% Nilai PWM: ");
   Serial.println(nilaiPWM);
+  lcd.setCursor(0, 3);
+  lcd.print("Lampu : ");
+  int kecerahan = (nilaiPWM / 255) * 100;
+  lcd.print(kecerahan);
+  lcd.print(" %");
   delay(250);
 
   // tampilkan nilai variabel lain ke serial monitor untuk debugging
@@ -148,21 +169,21 @@ void sendSensorData()
     waktuBerjalan++;
     if (waktuBerjalan > 15)
     {
-      mistOn();
+      peltOn();
     }
   }
   // desicion making ketika kelembapan diatas batas
   else if (suhu == batasSuhu && kelembapan > batasKelembapan)
   {
-    fanOn();
-    mistOff();
+    fanOff();
+    peltOn();
     waktuBerjalan = 0;
   }
   // desicion making ketika tidak dalam kondisi kedua diatas
   else if (suhu == batasSuhu && kelembapan == batasKelembapan)
   {
     fanOff();
-    mistOff();
+    peltOff();
     waktuBerjalan = 0;
   }
 }
@@ -188,6 +209,8 @@ void setup()
   // put your setup code here, to run once:
   Serial.begin(115200);
   dht.begin();
+  lcd.init();
+  lcd.backlight();
   Blynk.begin(auth, ssid, password);
 
   // Setup a function to be called every second
@@ -218,22 +241,22 @@ void loop()
   }
 
   // desicion making nilai cahaya
-    if (intensitasCahaya < batasBawahNilaiCahaya)
+  if (intensitasCahaya < batasBawahNilaiCahaya)
+  {
+    nilaiPWM++;
+    if (nilaiPWM >= 255)
     {
-      nilaiPWM++;
-      if (nilaiPWM >= 255)
-      {
-        nilaiPWM = 255;
-      }
+      nilaiPWM = 255;
     }
-    else if (intensitasCahaya > batasAtasNilaiCahaya)
+  }
+  else if (intensitasCahaya > batasAtasNilaiCahaya)
+  {
+    nilaiPWM--;
+    if (nilaiPWM <= 0)
     {
-      nilaiPWM--;
-      if (nilaiPWM <= 0)
-      {
-        nilaiPWM = 0;
-      }
+      nilaiPWM = 0;
     }
+  }
 
   // tulis nilai PWM ke LED
   analogWrite(pinLED, nilaiPWM);
