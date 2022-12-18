@@ -84,6 +84,14 @@ void nadaStartup()
   noTone(pinBuzzer);
 }
 
+void displayStartup()
+{
+  lcd.setCursor(2, 1);
+  lcd.print("SMART KUMBUNG IOT");
+  lcd.setCursor(5, 2);
+  lcd.print("Kelompok D");
+}
+
 // fungsi kipas nyala
 void fanOn()
 {
@@ -211,7 +219,7 @@ void sendSensorData()
     mistOff();
     peltOn();
   }
-   else if (suhu > batasSuhu && kelembapan < batasKelembapan)
+  else if (suhu > batasSuhu && kelembapan < batasKelembapan)
   {
     fanOff();
     mistOff();
@@ -286,7 +294,12 @@ void setup()
   digitalWrite(pinSwFanMist, HIGH);
   digitalWrite(pinSwMist, HIGH);
   digitalWrite(pinSwPeltier, HIGH);
+
+  lcd.clear();
+  displayStartup();
   nadaStartup();
+  delay(1000);
+  lcd.clear();
 
   // initialize all the readings to 0:
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
