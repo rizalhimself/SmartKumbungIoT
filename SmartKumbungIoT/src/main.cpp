@@ -77,7 +77,15 @@ void nadaWarning()
   tone(pinBuzzer, 500, 200);
   delay(300);
   tone(pinBuzzer, 500, 200);
+  delay(500);
+  tone(pinBuzzer, 500, 200);
   delay(300);
+  tone(pinBuzzer, 500, 200);
+  delay(500);
+  tone(pinBuzzer, 500, 200);
+  delay(300);
+  tone(pinBuzzer, 500, 200);
+  delay(500);
   noTone(pinBuzzer);
 }
 
@@ -225,7 +233,7 @@ void sendSensorData()
     fanOff();
     mistOff();
     counterBuzzer++;
-    if (counterBuzzer > 400)
+    if (counterBuzzer > 40)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -241,7 +249,7 @@ void sendSensorData()
     mistOn();
     peltOff();
     counterBuzzer++;
-    if (counterBuzzer > 400)
+    if (counterBuzzer > 40)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -257,7 +265,7 @@ void sendSensorData()
     mistOff();
     peltOn();
     counterBuzzer++;
-    if (counterBuzzer > 400)
+    if (counterBuzzer > 40)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -273,7 +281,7 @@ void sendSensorData()
     mistOff();
     peltOn();
     counterBuzzer++;
-    if (counterBuzzer > 400)
+    if (counterBuzzer > 40)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -289,7 +297,7 @@ void sendSensorData()
     mistOff();
     peltOff();
     counterBuzzer++;
-    if (counterBuzzer > 400)
+    if (counterBuzzer > 40)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -438,7 +446,11 @@ void loop()
 
   if (triggerBuzzer == 1)
   {
+    lcd.clear();
+    lcd.setCursor(2,2);
+    lcd.print("Limit Aktuator!");
     nadaWarning();
+    lcd.clear();
   }
   else
   {
