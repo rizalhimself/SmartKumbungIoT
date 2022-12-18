@@ -182,58 +182,47 @@ void sendSensorData()
   Serial.println(" %");
 
   // desicion making ketika suhu diatas batas
-  if (suhu > batasSuhu && kelembapan == batasKelembapan)
-  {
-    timingSuhu++;
-    if (timingSuhu < 3)
-    {
-      fanOn();
-    }
-    else if (timingSuhu > 3)
-    {
-      fanOff();
-      peltOn();
-    }
-  }
-  // desicion making ketika kelembapan diatas batas
-  if (suhu == batasSuhu && kelembapan > batasKelembapan)
-  {
-    timingKelembapan++;
-    if (timingKelembapan < 5)
-    {
-      fanOn();
-    }
-    else if (timingKelembapan > 5)
-    {
-      fanOff();
-      peltOn();
-    }
-  }
-  // desicion making ketika keduanya diatas batas
   if (suhu > batasSuhu && kelembapan > batasKelembapan)
   {
-
-    timingSK++;
-    if (timingSK < 30)
-    {
-      fanOn();
-    }
-    else if (timingSK > 30)
-    {
-      fanOff();
-      peltOn();
-    }
+    peltOn();
+    fanOff();
+    mistOff();
   }
-
-  // desicion making ketika tidak dalam kondisi kedua diatas
-  if (suhu == batasSuhu && kelembapan == batasKelembapan)
+  else if (suhu < batasSuhu && kelembapan < batasKelembapan)
+  {
+    fanOn();
+    mistOn();
+    peltOff();
+  }
+  else if (suhu == batasSuhu && kelembapan == batasKelembapan)
   {
     fanOff();
     mistOff();
     peltOff();
-    timingSuhu = 0;
-    timingKelembapan = 0;
-    timingSK = 0;
+  }
+  else if (suhu > batasSuhu)
+  {
+    peltOn();
+    fanOff();
+    mistOff();
+  }
+  else if (suhu < batasSuhu)
+  {
+    fanOn();
+    peltOff();
+    mistOff();
+  }
+  else if (kelembapan > batasKelembapan)
+  {
+    peltOn();
+    fanOff();
+    mistOff();
+  }
+  else if (kelembapan < batasKelembapan)
+  {
+    mistOn();
+    peltOff();
+    fanOff();
   }
 }
 
