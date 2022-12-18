@@ -162,6 +162,8 @@ void sendSensorData()
   lcd.print("Suhu/Lembab: ");
   lcd.print(suhu);
   lcd.print("C ");
+  lcd.setCursor(16,0);
+  lcd.print("/");
   lcd.setCursor(17, 0);
   lcd.print(kelembapan);
   lcd.print("%");
@@ -169,7 +171,7 @@ void sendSensorData()
 
   // dapatkan data kualitas sinyal
   kualitasSinyal = WiFi.RSSI();
-  lcd.setCursor(0, 3);
+  lcd.setCursor(0, 2);
   lcd.print("Sinyal : ");
   lcd.print(kualitasSinyal);
   lcd.print(" RSSI");
@@ -185,10 +187,6 @@ void sendSensorData()
   lcd.print(" lux");
   Serial.print("% Nilai PWM: ");
   Serial.println(nilaiPWM);
-  lcd.setCursor(0, 2);
-  lcd.print("Lampu : ");
-  lcd.print(kecerahan);
-  lcd.print(" %");
   delay(250);
 
   // tampilkan nilai variabel lain ke serial monitor untuk debugging
