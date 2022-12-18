@@ -20,13 +20,15 @@ char ssid[] = "vivo1820";
 char password[] = "sinta123";
 
 // definisi pin wemos yang digunakan
-#define pinDHT D7
+#define pinDHT 13 // D7
 #define pinTMPT6000 A0
-#define pinSwFan D2
-#define pinSwFanMist D9
-#define pinSwMist D5
-#define pinSwPeltier D6
-#define pinLED D8
+#define pinSwFan 16        // D2
+#define pinSwFanMist 2     // D9
+#define pinSwMist 14       // D5
+#define pinSwFanPeltier 12 // D6
+#define pinSwPeltier 12    // D12
+#define pinLED 0           // D8
+#define pinBuzzer 15       // D10
 
 // definisi virtual pin blynk yang digunakan
 #define vPinSuhu V0
@@ -48,15 +50,28 @@ WidgetLED fanStats(vPinLedStatsFan);
 WidgetLED mistStats(vPinLedStatMist);
 WidgetLED peltStats(vPinPeltierStat);
 
-int suhu, kelembapan, intensitasCahaya;
+int suhu, kelembapan, intensitasCahaya, kualitasSinyal;
 int batasSuhu = 27;
 int batasKelembapan = 80;
 int batasBawahNilaiCahaya = 200;
 int batasAtasNilaiCahaya = 600;
 int nilaiPWM = 0;
-unsigned long waktuBerjalan;
-unsigned long waktuSebelum;
+int kecerahan;
+int timingSuhu = 0;
+int timingKelembapan = 0;
+int timingSK = 0;
+unsigned long waktuBerjalan, waktuBerjalanBlynk;
+unsigned long waktuSebelum, waktuSebelumBlynk;
 const unsigned long waktuJeda = 250;
+const unsigned long waktuJedaBlynk = 50;
+
+const int numReadings = 20;
+
+int readings[numReadings]; // the readings from the analog input
+int readIndex = 0;         // the index of the current reading
+int total = 0;             // the running total
+
+int inputPin = pinTMPT6000;
 
 // fungsi kipas nyala
 void fanOn()
@@ -96,6 +111,7 @@ void mistOff()
 void peltOn()
 {
   peltStats.on();
+  digitalWrite(pinSwFanPeltier, LOW);
   digitalWrite(pinSwPeltier, LOW);
   Serial.println("Peltier On");
 }
@@ -105,50 +121,53 @@ void peltOff()
 {
   peltStats.off();
   digitalWrite(pinSwPeltier, HIGH);
+  digitalWrite(pinSwFanPeltier, HIGH);
   Serial.println("Peltier Off");
 }
 
 // fungsi kirim data ke server blynk
 void sendSensorData()
 {
-  // dapatkan data suhu
+  // dapatkan data suhu dan kelembapan
   suhu = dht.readTemperature();
+  kelembapan = dht.readHumidity();
   Blynk.virtualWrite(vPinSuhu, suhu);
+  Blynk.virtualWrite(vPinKelembapan, kelembapan);
   Serial.print("% Temperature: ");
   Serial.print(suhu);
   Serial.println(" C");
-  lcd.setCursor(0, 0);
-  lcd.print("Suhu: ");
-  lcd.print(suhu);
-  lcd.print(" C");
-  delay(250);
-
-  // dapatkan data kelembapan
-  kelembapan = dht.readHumidity();
-  Blynk.virtualWrite(vPinKelembapan, kelembapan);
   Serial.print("% Kelembaban: ");
   Serial.print(kelembapan);
   Serial.println(" %");
-  lcd.setCursor(0, 1);
-  lcd.print("Lembab : ");
+  lcd.setCursor(0, 0);
+  lcd.print("Suhu/Lembab: ");
+  lcd.print(suhu);
+  lcd.print("C ");
+  lcd.setCursor(17, 0);
   lcd.print(kelembapan);
-  lcd.print(" %");
+  lcd.print("%");
   delay(250);
+
+  // dapatkan data kualitas sinyal
+  kualitasSinyal = WiFi.RSSI();
+  lcd.setCursor(0, 3);
+  lcd.print("Sinyal : ");
+  lcd.print(kualitasSinyal);
+  lcd.print(" RSSI");
 
   // tampilkan nilai intensitas cahaya
   Blynk.virtualWrite(vPinIntensitasCahaya, intensitasCahaya);
   Serial.print("% Intensitas Cahaya: ");
   Serial.print(intensitasCahaya);
   Serial.println(" lux");
-  lcd.setCursor(0, 2);
+  lcd.setCursor(0, 1);
   lcd.print("Cahaya : ");
   lcd.print(intensitasCahaya);
   lcd.print(" lux");
   Serial.print("% Nilai PWM: ");
   Serial.println(nilaiPWM);
-  lcd.setCursor(0, 3);
+  lcd.setCursor(0, 2);
   lcd.print("Lampu : ");
-  int kecerahan = (nilaiPWM / 255) * 100;
   lcd.print(kecerahan);
   lcd.print(" %");
   delay(250);
@@ -163,28 +182,58 @@ void sendSensorData()
   Serial.println(" %");
 
   // desicion making ketika suhu diatas batas
-  if (suhu > batasSuhu)
+  if (suhu > batasSuhu && kelembapan == batasKelembapan)
   {
-    fanOn();
-    waktuBerjalan++;
-    if (waktuBerjalan > 15)
+    timingSuhu++;
+    if (timingSuhu < 3)
     {
+      fanOn();
+    }
+    else if (timingSuhu > 3)
+    {
+      fanOff();
       peltOn();
     }
   }
   // desicion making ketika kelembapan diatas batas
-  else if (suhu == batasSuhu && kelembapan > batasKelembapan)
+  if (suhu == batasSuhu && kelembapan > batasKelembapan)
   {
-    fanOff();
-    peltOn();
-    waktuBerjalan = 0;
+    timingKelembapan++;
+    if (timingKelembapan < 5)
+    {
+      fanOn();
+    }
+    else if (timingKelembapan > 5)
+    {
+      fanOff();
+      peltOn();
+    }
   }
+  // desicion making ketika keduanya diatas batas
+  if (suhu > batasSuhu && kelembapan > batasKelembapan)
+  {
+
+    timingSK++;
+    if (timingSK < 30)
+    {
+      fanOn();
+    }
+    else if (timingSK > 30)
+    {
+      fanOff();
+      peltOn();
+    }
+  }
+
   // desicion making ketika tidak dalam kondisi kedua diatas
-  else if (suhu == batasSuhu && kelembapan == batasKelembapan)
+  if (suhu == batasSuhu && kelembapan == batasKelembapan)
   {
     fanOff();
+    mistOff();
     peltOff();
-    waktuBerjalan = 0;
+    timingSuhu = 0;
+    timingKelembapan = 0;
+    timingSK = 0;
   }
 }
 
@@ -224,19 +273,49 @@ void setup()
   digitalWrite(pinSwFanMist, HIGH);
   digitalWrite(pinSwMist, HIGH);
   digitalWrite(pinSwPeltier, HIGH);
+
+  // initialize all the readings to 0:
+  for (int thisReading = 0; thisReading < numReadings; thisReading++)
+  {
+    readings[thisReading] = 0;
+  }
 }
 
 void loop()
 {
   // put your main code here, to run repeatedly:
-  Blynk.run();
-  timer.run();
 
   waktuBerjalan = millis();
+  waktuBerjalanBlynk = millis();
+
+  if (waktuBerjalanBlynk - waktuSebelumBlynk >= waktuJedaBlynk)
+  {
+    Blynk.run();
+    timer.run();
+    waktuSebelumBlynk = waktuBerjalanBlynk;
+  }
+
   if (waktuBerjalan - waktuSebelum >= waktuJeda)
   {
     // dapatkan data intensitas cahaya
-    intensitasCahaya = analogRead(pinTMPT6000);
+    // subtract the last reading:
+    total = total - readings[readIndex];
+    // read from the sensor:
+    readings[readIndex] = analogRead(inputPin);
+    // add the reading to the total:
+    total = total + readings[readIndex];
+    // advance to the next position in the array:
+    readIndex = readIndex + 1;
+
+    // if we're at the end of the array...
+    if (readIndex >= numReadings)
+    {
+      // ...wrap around to the beginning:
+      readIndex = 0;
+    }
+
+    // calculate the average:
+    intensitasCahaya = total / numReadings;
     waktuSebelum = waktuBerjalan;
   }
 
@@ -249,7 +328,7 @@ void loop()
       nilaiPWM = 255;
     }
   }
-  else if (intensitasCahaya > batasAtasNilaiCahaya)
+  else if (intensitasCahaya > batasBawahNilaiCahaya)
   {
     nilaiPWM--;
     if (nilaiPWM <= 0)
@@ -260,4 +339,5 @@ void loop()
 
   // tulis nilai PWM ke LED
   analogWrite(pinLED, nilaiPWM);
+  kecerahan = (nilaiPWM / 255) * 100;
 }
