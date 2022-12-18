@@ -225,7 +225,7 @@ void sendSensorData()
     fanOff();
     mistOff();
     counterBuzzer++;
-    if (counterBuzzer > 40)
+    if (counterBuzzer > 400)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -241,7 +241,7 @@ void sendSensorData()
     mistOn();
     peltOff();
     counterBuzzer++;
-    if (counterBuzzer > 40)
+    if (counterBuzzer > 400)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -257,7 +257,7 @@ void sendSensorData()
     mistOff();
     peltOn();
     counterBuzzer++;
-    if (counterBuzzer > 40)
+    if (counterBuzzer > 400)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -273,7 +273,7 @@ void sendSensorData()
     mistOff();
     peltOn();
     counterBuzzer++;
-    if (counterBuzzer > 40)
+    if (counterBuzzer > 400)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
@@ -289,7 +289,7 @@ void sendSensorData()
     mistOff();
     peltOff();
     counterBuzzer++;
-    if (counterBuzzer > 40)
+    if (counterBuzzer > 400)
     {
       triggerBuzzer = 1;
       counterBuzzer = 0;
