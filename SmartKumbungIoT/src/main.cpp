@@ -57,6 +57,8 @@ int batasBawahNilaiCahaya = 200;
 int batasAtasNilaiCahaya = 600;
 int nilaiPWM = 0;
 int kecerahan;
+int triggerBuzzer = 0;
+int counterBuzzer = 0;
 unsigned long waktuBerjalan, waktuBerjalanBlynk;
 unsigned long waktuSebelum, waktuSebelumBlynk;
 const unsigned long waktuJeda = 250;
@@ -69,6 +71,15 @@ int readIndex = 0;         // the index of the current reading
 int total = 0;             // the running total
 
 int inputPin = pinTMPT6000;
+
+void nadaWarning()
+{
+  tone(pinBuzzer, 500, 200);
+  delay(300);
+  tone(pinBuzzer, 500, 200);
+  delay(300);
+  noTone(pinBuzzer);
+}
 
 void nadaStartup()
 {
@@ -95,7 +106,7 @@ void fanOn()
   digitalWrite(pinSwFan, LOW);
   fanStats.on();
   Serial.println("Kipas On");
-  lcd.setCursor(0,3);
+  lcd.setCursor(0, 3);
   lcd.print("FAN ON");
 }
 
@@ -105,7 +116,7 @@ void fanOff()
   digitalWrite(pinSwFan, HIGH);
   fanStats.off();
   Serial.println("Kipas Off");
-  lcd.setCursor(0,3);
+  lcd.setCursor(0, 3);
   lcd.print("      ");
 }
 
@@ -116,7 +127,7 @@ void mistOn()
   digitalWrite(pinSwMist, LOW);
   mistStats.on();
   Serial.println("Mist Maker On");
-  lcd.setCursor(7,3);
+  lcd.setCursor(7, 3);
   lcd.print("MIST ON");
 }
 
@@ -127,7 +138,7 @@ void mistOff()
   digitalWrite(pinSwMist, HIGH);
   Serial.println("Mist Maker Off");
   mistStats.off();
-  lcd.setCursor(7,3);
+  lcd.setCursor(7, 3);
   lcd.print("       ");
 }
 
@@ -138,7 +149,7 @@ void peltOn()
   digitalWrite(pinSwFanPeltier, LOW);
   digitalWrite(pinSwPeltier, LOW);
   Serial.println("Peltier On");
-  lcd.setCursor(14,3);
+  lcd.setCursor(14, 3);
   lcd.print("PEL ON");
 }
 
@@ -149,7 +160,7 @@ void peltOff()
   digitalWrite(pinSwPeltier, HIGH);
   digitalWrite(pinSwFanPeltier, HIGH);
   Serial.println("Peltier Off");
-  lcd.setCursor(14,3);
+  lcd.setCursor(14, 3);
   lcd.print("      ");
 }
 
@@ -171,7 +182,7 @@ void sendSensorData()
   lcd.print("Suhu/Lembab: ");
   lcd.print(suhu);
   lcd.print("C ");
-  lcd.setCursor(16,0);
+  lcd.setCursor(16, 0);
   lcd.print("/");
   lcd.setCursor(17, 0);
   lcd.print(kelembapan);
@@ -213,30 +224,80 @@ void sendSensorData()
     peltOn();
     fanOff();
     mistOff();
+    counterBuzzer++;
+    if (counterBuzzer > 40)
+    {
+      triggerBuzzer = 1;
+      counterBuzzer = 0;
+    }
+    else
+    {
+      triggerBuzzer = 0;
+    }
   }
   else if (suhu < batasSuhu && kelembapan < batasKelembapan)
   {
     fanOn();
     mistOn();
     peltOff();
+    counterBuzzer++;
+    if (counterBuzzer > 40)
+    {
+      triggerBuzzer = 1;
+      counterBuzzer = 0;
+    }
+    else
+    {
+      triggerBuzzer = 0;
+    }
   }
   else if (suhu < batasSuhu && kelembapan > batasKelembapan)
   {
     fanOff();
     mistOff();
     peltOn();
+    counterBuzzer++;
+    if (counterBuzzer > 40)
+    {
+      triggerBuzzer = 1;
+      counterBuzzer = 0;
+    }
+    else
+    {
+      triggerBuzzer = 0;
+    }
   }
   else if (suhu > batasSuhu && kelembapan < batasKelembapan)
   {
     fanOff();
     mistOff();
     peltOn();
+    counterBuzzer++;
+    if (counterBuzzer > 40)
+    {
+      triggerBuzzer = 1;
+      counterBuzzer = 0;
+    }
+    else
+    {
+      triggerBuzzer = 0;
+    }
   }
   else if (suhu == batasSuhu && kelembapan == batasKelembapan)
   {
     fanOff();
     mistOff();
     peltOff();
+    counterBuzzer++;
+    if (counterBuzzer > 40)
+    {
+      triggerBuzzer = 1;
+      counterBuzzer = 0;
+    }
+    else
+    {
+      triggerBuzzer = 0;
+    }
   }
   else if (suhu > batasSuhu)
   {
@@ -374,4 +435,13 @@ void loop()
   // tulis nilai PWM ke LED
   analogWrite(pinLED, nilaiPWM);
   kecerahan = (nilaiPWM / 255) * 100;
+
+  if (triggerBuzzer == 1)
+  {
+    nadaWarning();
+  }
+  else
+  {
+    noTone(pinBuzzer);
+  }
 }
