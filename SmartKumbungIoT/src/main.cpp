@@ -73,6 +73,17 @@ int total = 0;             // the running total
 
 int inputPin = pinTMPT6000;
 
+void nadaStartup()
+{
+  tone(pinBuzzer, 500, 300);
+  delay(300);
+  tone(pinBuzzer, 1500, 350);
+  delay(350);
+  tone(pinBuzzer, 650, 200);
+  delay(300);
+  noTone(pinBuzzer);
+}
+
 // fungsi kipas nyala
 void fanOn()
 {
@@ -194,6 +205,18 @@ void sendSensorData()
     mistOn();
     peltOff();
   }
+  else if (suhu < batasSuhu && kelembapan > batasKelembapan)
+  {
+    fanOff();
+    mistOff();
+    peltOn();
+  }
+   else if (suhu > batasSuhu && kelembapan < batasKelembapan)
+  {
+    fanOff();
+    mistOff();
+    peltOn();
+  }
   else if (suhu == batasSuhu && kelembapan == batasKelembapan)
   {
     fanOff();
@@ -258,10 +281,12 @@ void setup()
   pinMode(pinSwMist, OUTPUT);
   pinMode(pinSwPeltier, OUTPUT);
   pinMode(pinLED, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
   digitalWrite(pinSwFan, HIGH);
   digitalWrite(pinSwFanMist, HIGH);
   digitalWrite(pinSwMist, HIGH);
   digitalWrite(pinSwPeltier, HIGH);
+  nadaStartup();
 
   // initialize all the readings to 0:
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
