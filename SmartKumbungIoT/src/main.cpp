@@ -57,9 +57,6 @@ int batasBawahNilaiCahaya = 200;
 int batasAtasNilaiCahaya = 600;
 int nilaiPWM = 0;
 int kecerahan;
-int timingSuhu = 0;
-int timingKelembapan = 0;
-int timingSK = 0;
 unsigned long waktuBerjalan, waktuBerjalanBlynk;
 unsigned long waktuSebelum, waktuSebelumBlynk;
 const unsigned long waktuJeda = 250;
@@ -98,6 +95,8 @@ void fanOn()
   digitalWrite(pinSwFan, LOW);
   fanStats.on();
   Serial.println("Kipas On");
+  lcd.setCursor(0,3);
+  lcd.print("FAN ON");
 }
 
 // fungsi kipas mati
@@ -106,6 +105,8 @@ void fanOff()
   digitalWrite(pinSwFan, HIGH);
   fanStats.off();
   Serial.println("Kipas Off");
+  lcd.setCursor(0,3);
+  lcd.print("      ");
 }
 
 // fungsi mist maker nyala
@@ -115,6 +116,8 @@ void mistOn()
   digitalWrite(pinSwMist, LOW);
   mistStats.on();
   Serial.println("Mist Maker On");
+  lcd.setCursor(7,3);
+  lcd.print("MIST ON");
 }
 
 // fungsi mist maker mati
@@ -124,6 +127,8 @@ void mistOff()
   digitalWrite(pinSwMist, HIGH);
   Serial.println("Mist Maker Off");
   mistStats.off();
+  lcd.setCursor(7,3);
+  lcd.print("       ");
 }
 
 // fungsi peltier nyala
@@ -133,6 +138,8 @@ void peltOn()
   digitalWrite(pinSwFanPeltier, LOW);
   digitalWrite(pinSwPeltier, LOW);
   Serial.println("Peltier On");
+  lcd.setCursor(14,3);
+  lcd.print("PEL ON");
 }
 
 // fungsi peltier mati
@@ -142,6 +149,8 @@ void peltOff()
   digitalWrite(pinSwPeltier, HIGH);
   digitalWrite(pinSwFanPeltier, HIGH);
   Serial.println("Peltier Off");
+  lcd.setCursor(14,3);
+  lcd.print("      ");
 }
 
 // fungsi kirim data ke server blynk
